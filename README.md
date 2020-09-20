@@ -4,6 +4,11 @@
 
  CameraX + OpenCV + TesorFlow Lite basic
 
+```
+[Image sensor]-->[CameraX]-->[OpenCV4]-->[TensorFlow Lite]
+
+```
+
 ## CameraX beta getting started
 
 - https://codelabs.developers.google.com/codelabs/camerax-getting-started/
