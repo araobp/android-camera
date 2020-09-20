@@ -1,10 +1,15 @@
 package jp.araobp.camera
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.PorterDuff
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
+import android.view.SurfaceView
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -13,14 +18,15 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import jp.araobp.camera.opecv.colorFilter
+import jp.araobp.camera.opecv.yuvToRgba
 import kotlinx.android.synthetic.main.activity_main.*
 import org.opencv.android.OpenCVLoader
+import org.opencv.android.Utils
 import java.io.File
-import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
-typealias LumaListener = (luma: Double) -> Unit
+import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
@@ -58,15 +64,10 @@ class MainActivity : AppCompatActivity() {
         // Hide the navigation bar
         makeFullscreen()
 
-        // Set up the listener for take photo button
-        camera_capture_button.setOnClickListener { takePhoto() }
-
         outputDirectory = getOutputDirectory()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
-
-    private fun takePhoto() {}
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
@@ -75,21 +76,13 @@ class MainActivity : AppCompatActivity() {
             // Used to bind the lifecycle of cameras to the lifecycle owner
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            // Preview
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(viewFinder.createSurfaceProvider())
-                }
-
             // Image Analyzer
             val imageAnalyzer = ImageAnalysis.Builder()
-                .setTargetResolution(Properties.TARGET_RESOLUTION)
+                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                //.setTargetResolution(Properties.TARGET_RESOLUTION)
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-                        Log.d(TAG, "Average luminosity: $luma")
-                    })
+                    it.setAnalyzer(cameraExecutor, ImageAnalyzer())
                 }
 
             // Select back camera as a default
@@ -100,8 +93,9 @@ class MainActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 // Bind use cases to camera
+
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageAnalyzer
+                    this, cameraSelector, imageAnalyzer
                 )
 
             } catch (exc: Exception) {
@@ -119,7 +113,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun getOutputDirectory(): File {
         val mediaDir = externalMediaDirs.firstOrNull()?.let {
-            File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+        }
         return if (mediaDir != null && mediaDir.exists())
             mediaDir else filesDir
     }
@@ -131,7 +126,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "CameraXBasic"
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
@@ -154,28 +148,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
+    private inner class ImageAnalyzer() : ImageAnalysis.Analyzer {
 
-        private fun ByteBuffer.toByteArray(): ByteArray {
-            rewind()    // Rewind the buffer to zero
-            val data = ByteArray(remaining())
-            get(data)   // Copy the buffer into a byte array
-            return data // Return the byte array
-        }
+        @SuppressLint("UnsafeExperimentalUsageError")
+        override fun analyze(imageProxy: ImageProxy) {
 
-        override fun analyze(image: ImageProxy) {
+            Log.d(TAG, "width: ${imageProxy.width}, height: ${imageProxy.height}")
+            val mat = imageProxy.image?.yuvToRgba()
+            imageProxy.close()
 
-            Log.d(TAG, "width: ${image.width}, height: ${image.height}")
-            val buffer = image.planes[0].buffer
-            val data = buffer.toByteArray()
-            val pixels = data.map { it.toInt() and 0xFF }
-            val luma = pixels.average()
+            mat?.let {
 
-            listener(luma)
+                val filtered = if (toggleButtonColorFilter.isChecked) {
+                    colorFilter(it, "yellow", "pink")
+                } else {
+                    it
+                }
 
-            image.close()
+                var bmp =
+                    Bitmap.createBitmap(
+                        imageProxy.width,
+                        imageProxy.height,
+                        Bitmap.Config.ARGB_8888
+                    );
+                Utils.matToBitmap(filtered, bmp);
+                val screenWidth = surfaceView.width * 16F / 19F
+                val src = Rect(0, 0, imageProxy.width - 1, imageProxy.height - 1)
+                val dest = Rect(0, 0, screenWidth.roundToInt() - 1, surfaceView.height - 1)
+                val canvas = surfaceView.holder.lockCanvas()
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR)
+                canvas.drawBitmap(bmp, src, dest, null)
+                surfaceView.holder.unlockCanvasAndPost(canvas)
+            }
         }
     }
+
 
     private fun makeFullscreen() {
         window.decorView.systemUiVisibility =
