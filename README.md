@@ -1,4 +1,7 @@
 # android-camera
+
+(Work in progress)
+
  CameraX + OpenCV + TesorFlow Lite basic
 
 ## CameraX beta getting started
