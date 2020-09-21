@@ -17,6 +17,8 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
+import jp.araobp.camera.Properties.Companion.SCREEN_WIDTH_RATIO
 import jp.araobp.camera.opecv.OpticalFlow
 import jp.araobp.camera.opecv.colorFilter
 import jp.araobp.camera.opecv.yuvToRgba
@@ -35,8 +37,10 @@ class MainActivity : AppCompatActivity() {
         OpenCVLoader.initDebug()
     }
 
-    private lateinit var mOutputDirectory: File
     private lateinit var mCameraExecutor: ExecutorService
+
+    private var mRectRight = 0
+    private var mRectBottom = 0
 
     private val mOpticalFlow = OpticalFlow()
 
@@ -63,7 +67,10 @@ class MainActivity : AppCompatActivity() {
         // Hide the navigation bar
         makeFullscreen()
 
-        mOutputDirectory = getOutputDirectory()
+        surfaceView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            mRectRight = (surfaceView.width * SCREEN_WIDTH_RATIO).roundToInt() - 1
+            mRectBottom = surfaceView.height - 1
+        }
 
         mCameraExecutor = Executors.newSingleThreadExecutor()
     }
@@ -102,6 +109,7 @@ class MainActivity : AppCompatActivity() {
             }
 
         }, ContextCompat.getMainExecutor(this))
+
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -160,6 +168,7 @@ class MainActivity : AppCompatActivity() {
 
                 var filtered = it
 
+                //--- Digital signal processing with OpenCV START---//
                 if (toggleButtonColorFilter.isChecked) {
                     filtered = colorFilter(filtered, "yellow", "red")
                 }
@@ -167,17 +176,20 @@ class MainActivity : AppCompatActivity() {
                 if (toggleButtonOpticalFlow.isChecked) {
                     filtered = mOpticalFlow.process(filtered)
                 }
+                //--- Digital signal processing with OpenCV END ---//
 
                 var bitmapFiltered =
                     Bitmap.createBitmap(
                         imageProxy.width,
                         imageProxy.height,
                         Bitmap.Config.ARGB_8888
-                    );
+                    )
+
                 Utils.matToBitmap(filtered, bitmapFiltered);
-                val screenWidth = surfaceView.width * 12F / 19F  // 19:9 to 4:3
+
                 val src = Rect(0, 0, imageProxy.width - 1, imageProxy.height - 1)
-                val dest = Rect(0, 0, screenWidth.roundToInt() - 1, surfaceView.height - 1)
+                val dest = Rect(0, 0, mRectRight, mRectBottom)
+
                 val canvas = surfaceView.holder.lockCanvas()
                 canvas.drawColor(0, PorterDuff.Mode.CLEAR)
                 canvas.drawBitmap(bitmapFiltered, src, dest, null)
