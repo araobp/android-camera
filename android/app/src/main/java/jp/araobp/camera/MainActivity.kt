@@ -9,7 +9,6 @@ import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
-import android.view.SurfaceView
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -18,6 +17,7 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import jp.araobp.camera.opecv.OpticalFlow
 import jp.araobp.camera.opecv.colorFilter
 import jp.araobp.camera.opecv.yuvToRgba
 import kotlinx.android.synthetic.main.activity_main.*
@@ -35,11 +35,10 @@ class MainActivity : AppCompatActivity() {
         OpenCVLoader.initDebug()
     }
 
-    private var imageCapture: ImageCapture? = null
+    private lateinit var mOutputDirectory: File
+    private lateinit var mCameraExecutor: ExecutorService
 
-    private lateinit var outputDirectory: File
-    private lateinit var cameraExecutor: ExecutorService
-
+    private val mOpticalFlow = OpticalFlow()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -64,9 +63,9 @@ class MainActivity : AppCompatActivity() {
         // Hide the navigation bar
         makeFullscreen()
 
-        outputDirectory = getOutputDirectory()
+        mOutputDirectory = getOutputDirectory()
 
-        cameraExecutor = Executors.newSingleThreadExecutor()
+        mCameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     private fun startCamera() {
@@ -78,11 +77,11 @@ class MainActivity : AppCompatActivity() {
 
             // Image Analyzer
             val imageAnalyzer = ImageAnalysis.Builder()
-                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                //.setTargetAspectRatio(AspectRatio.RATIO_16_9)
                 //.setTargetResolution(Properties.TARGET_RESOLUTION)
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor, ImageAnalyzer())
+                    it.setAnalyzer(mCameraExecutor, ImageAnalyzer())
                 }
 
             // Select back camera as a default
@@ -121,7 +120,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraExecutor.shutdown()
+        mCameraExecutor.shutdown()
     }
 
     companion object {
@@ -159,25 +158,29 @@ class MainActivity : AppCompatActivity() {
 
             mat?.let {
 
-                val filtered = if (toggleButtonColorFilter.isChecked) {
-                    colorFilter(it, "yellow", "pink")
-                } else {
-                    it
+                var filtered = it
+
+                if (toggleButtonColorFilter.isChecked) {
+                    filtered = colorFilter(filtered, "yellow", "red")
                 }
 
-                var bmp =
+                if (toggleButtonOpticalFlow.isChecked) {
+                    filtered = mOpticalFlow.process(filtered)
+                }
+
+                var bitmapFiltered =
                     Bitmap.createBitmap(
                         imageProxy.width,
                         imageProxy.height,
                         Bitmap.Config.ARGB_8888
                     );
-                Utils.matToBitmap(filtered, bmp);
-                val screenWidth = surfaceView.width * 16F / 19F
+                Utils.matToBitmap(filtered, bitmapFiltered);
+                val screenWidth = surfaceView.width * 12F / 19F  // 19:9 to 4:3
                 val src = Rect(0, 0, imageProxy.width - 1, imageProxy.height - 1)
                 val dest = Rect(0, 0, screenWidth.roundToInt() - 1, surfaceView.height - 1)
                 val canvas = surfaceView.holder.lockCanvas()
                 canvas.drawColor(0, PorterDuff.Mode.CLEAR)
-                canvas.drawBitmap(bmp, src, dest, null)
+                canvas.drawBitmap(bitmapFiltered, src, dest, null)
                 surfaceView.holder.unlockCanvasAndPost(canvas)
             }
         }

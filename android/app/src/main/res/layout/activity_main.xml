@@ -9,7 +9,7 @@
 
     <ToggleButton
         android:id="@+id/toggleButtonColorFilter"
-        android:layout_width="100dp"
+        android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
@@ -18,6 +18,18 @@
         android:textOn="Color Filter"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ToggleButton
+        android:id="@+id/toggleButtonOpticalFlow"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Button"
+        android:textOff="Optical Flow"
+        android:textOn="Optical Flow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toggleButtonColorFilter" />
 
     <SurfaceView
         android:id="@+id/surfaceView"
