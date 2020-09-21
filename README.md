@@ -9,10 +9,17 @@
 
 ```
 
-## Digital signal processing filters
+## Digital signal processing filters with OpenCV4
 
 - Color filter
 - Optical flow
+- Difference
+- Face recognition
+- Intrusion detection
+
+## TensorFlow Lite
+
+- Object detection
 
 ## CameraX beta getting started
 
