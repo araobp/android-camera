@@ -9,6 +9,11 @@
 
 ```
 
+## Digital signal processing filters
+
+- Color filter
+- Optical flow
+
 ## CameraX beta getting started
 
 - https://codelabs.developers.google.com/codelabs/camerax-getting-started/
