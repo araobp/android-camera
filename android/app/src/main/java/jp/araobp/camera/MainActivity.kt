@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import jp.araobp.camera.Properties.Companion.SCREEN_WIDTH_RATIO
+import jp.araobp.camera.aicamera.ObjectDetector
 import jp.araobp.camera.opecv.OpticalFlow
 import jp.araobp.camera.opecv.colorFilter
 import jp.araobp.camera.opecv.yuvToRgba
@@ -43,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private var mRectBottom = 0
 
     private val mOpticalFlow = OpticalFlow()
+    private lateinit var mObjectDetector: ObjectDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -71,6 +73,8 @@ class MainActivity : AppCompatActivity() {
             mRectRight = (surfaceView.width * SCREEN_WIDTH_RATIO).roundToInt() - 1
             mRectBottom = surfaceView.height - 1
         }
+
+        mObjectDetector = ObjectDetector(this)
 
         mCameraExecutor = Executors.newSingleThreadExecutor()
     }
@@ -186,6 +190,12 @@ class MainActivity : AppCompatActivity() {
                     )
 
                 Utils.matToBitmap(filtered, bitmapFiltered);
+
+                // Object detection with TensorFlow Lite
+                if (toggleButtonObjectDetection.isChecked) {
+                    bitmapFiltered = mObjectDetector.detect(bitmapFiltered)
+                }
+
 
                 val src = Rect(0, 0, imageProxy.width - 1, imageProxy.height - 1)
                 val dest = Rect(0, 0, mRectRight, mRectBottom)
