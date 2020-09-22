@@ -10,7 +10,7 @@ Android CameraX demo with OpenCV4 and TesorFlow Lite
                      +------------------+--->[TensorFlow Lite]--+---> Final output
 ```
 
-## Digital signal processing filters with OpenCV4
+## Filters with OpenCV4
 
 - Color filter
 - Optical flow
