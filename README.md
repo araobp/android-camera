@@ -14,7 +14,7 @@ Android CameraX demo with OpenCV4 and TesorFlow Lite
 
 - Color filter
 - Optical flow
-- Difference
+- Difference extraction
 - Face recognition
 - Intrusion detection
 
