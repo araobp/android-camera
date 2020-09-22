@@ -1,8 +1,6 @@
 # android-camera
 
-(Work in progress)
-
-Android CameraX demo with OpenCV4 and TesorFlow Lite
+Android CameraX image analysis demo with OpenCV4 and TesorFlow Lite
 
 ```
 [Image sensor]-->[CameraX]-->[OpenCV4]--+-----------------------+
@@ -15,8 +13,6 @@ Android CameraX demo with OpenCV4 and TesorFlow Lite
 - Color filter
 - Optical flow
 - Difference extraction
-- Face recognition
-- Intrusion detection
 
 ## TensorFlow Lite
 
