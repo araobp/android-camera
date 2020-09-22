@@ -1,4 +1,4 @@
-# android-camera
+# Android camera
 
 Android CameraX image analysis demo with OpenCV4 and TesorFlow Lite
 
