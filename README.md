@@ -13,8 +13,6 @@ Android CameraX image analysis demo with OpenCV4 and TesorFlow Lite
 - Color filter
 - Optical flow
 - Difference extraction
-- Face recognition
-- Intrusion detection
 
 ## TensorFlow Lite
 
