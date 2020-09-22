@@ -15,17 +15,22 @@ I think 4G/5G smart phones (or 4G/5G with Android-based cameras) with 4K/8K imag
 ```
 Traditional PTZ monitoring camera
 
+                             Edge AI
   [Camera]---ONVIF/PoE---[Edge computer]---Ethernet---[Video recorder]---[Video management system]
   
 
-Android-based monitoring camera
+Android-based monitoring cameras are cheaper and more flexible than the traditional ones.
 
+    Edge AI
   [Smartphone]---4G/5G network---[Cloud storage]---[Video management app on cloud]
         |
  Direct communication over 4G/5G network
         |
   [Smartphone]
 ```
+
+This project is just a skeleton of such an AI camera.
+
 
 ## Filters with OpenCV4
 
