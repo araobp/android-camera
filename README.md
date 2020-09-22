@@ -8,6 +8,25 @@ Android CameraX image analysis demo with OpenCV4 and TesorFlow Lite
                      +------------------+--->[TensorFlow Lite]--+---> Final output
 ```
 
+## Background and motivation
+
+I think 4G/5G smart phones (or 4G/5G with Android-based cameras) with 4K/8K image sensors will replace the traditional PTZ monitoring cameras.
+
+```
+Traditional PTZ monitoring camera
+
+  [Camera]---ONVIF/PoE---[Edge computer]---Ethernet---[Video recorder]---[Video management system]
+  
+
+Android-based monitoring camera
+
+  [Smartphone]---4G/5G network---[Cloud storage]---[Video management app on cloud]
+        |
+ Direct communication over 4G/5G network
+        |
+  [Smartphone]
+```
+
 ## Filters with OpenCV4
 
 - Color filter
