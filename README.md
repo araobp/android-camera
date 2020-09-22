@@ -2,17 +2,25 @@
 
 (Work in progress)
 
- CameraX + OpenCV + TesorFlow Lite basic
+Android CameraX demo with OpenCV4 and TesorFlow Lite
 
 ```
-[Image sensor]-->[CameraX]-->[OpenCV4]-->[TensorFlow Lite]
-
+[Image sensor]-->[CameraX]-->[OpenCV4]--+-----------------------+
+                     |                  |                       |
+                     +------------------+--->[TensorFlow Lite]--+---> Final output
 ```
 
-## Digital signal processing filters
+## Filters with OpenCV4
 
 - Color filter
 - Optical flow
+- Difference extraction
+- Face recognition
+- Intrusion detection
+
+## TensorFlow Lite
+
+- Object detection
 
 ## CameraX beta getting started
 
