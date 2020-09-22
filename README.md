@@ -1,8 +1,6 @@
 # android-camera
 
-(Work in progress)
-
-Android CameraX demo with OpenCV4 and TesorFlow Lite
+Android CameraX image analysis demo with OpenCV4 and TesorFlow Lite
 
 ```
 [Image sensor]-->[CameraX]-->[OpenCV4]--+-----------------------+
