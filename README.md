@@ -32,7 +32,7 @@ Android-based monitoring cameras are cheaper and more flexible than the traditio
 This project is just a skeleton of such an AI camera.
 
 
-## Filters with OpenCV4
+## Image processing filters with OpenCV4
 
 - Color filter
 - Optical flow
