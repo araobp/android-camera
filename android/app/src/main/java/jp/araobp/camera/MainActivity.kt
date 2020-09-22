@@ -9,6 +9,7 @@ import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -23,6 +24,7 @@ import jp.araobp.camera.opecv.DifferenceExtractor
 import jp.araobp.camera.opecv.OpticalFlow
 import jp.araobp.camera.opecv.colorFilter
 import jp.araobp.camera.opecv.yuvToRgba
+import jp.araobp.camera.util.saveImage
 import kotlinx.android.synthetic.main.activity_main.*
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
@@ -46,6 +48,8 @@ class MainActivity : AppCompatActivity() {
     private val mOpticalFlow = OpticalFlow()
     private lateinit var mObjectDetector: ObjectDetector
     private val mDifference = DifferenceExtractor()
+
+    private var mShutterPressed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -123,21 +127,13 @@ class MainActivity : AppCompatActivity() {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun getOutputDirectory(): File {
-        val mediaDir = externalMediaDirs.firstOrNull()?.let {
-            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
-        }
-        return if (mediaDir != null && mediaDir.exists())
-            mediaDir else filesDir
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         mCameraExecutor.shutdown()
     }
 
     companion object {
-        private const val TAG = "CameraXBasic"
+        private const val TAG = "camera"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
@@ -206,7 +202,6 @@ class MainActivity : AppCompatActivity() {
                     bitmapFiltered = mObjectDetector.detect(bitmapFiltered)
                 }
 
-
                 val src = Rect(0, 0, imageProxy.width - 1, imageProxy.height - 1)
                 val dest = Rect(0, 0, mRectRight, mRectBottom)
 
@@ -214,6 +209,11 @@ class MainActivity : AppCompatActivity() {
                 canvas.drawColor(0, PorterDuff.Mode.CLEAR)
                 canvas.drawBitmap(bitmapFiltered, src, dest, null)
                 surfaceView.holder.unlockCanvasAndPost(canvas)
+
+                if (mShutterPressed) {
+                    saveImage(bitmapFiltered, this@MainActivity, "android-camera")
+                    mShutterPressed = false
+                }
             }
         }
     }
@@ -222,5 +222,22 @@ class MainActivity : AppCompatActivity() {
     private fun makeFullscreen() {
         window.decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+    }
+
+    /**
+     * Press volume key (volume up) or press a button on the bluetooth remote shutter
+     * to take a picture of the current Mat object
+     */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val action: Int = event.action
+        return when (event.keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> {
+                if (action == KeyEvent.ACTION_DOWN) {
+                    mShutterPressed = true
+                }
+                true
+            }
+            else -> super.dispatchKeyEvent(event)
+        }
     }
 }
