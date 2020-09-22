@@ -17,9 +17,9 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.doOnLayout
 import jp.araobp.camera.Properties.Companion.SCREEN_WIDTH_RATIO
 import jp.araobp.camera.aicamera.ObjectDetector
+import jp.araobp.camera.opecv.DifferenceExtractor
 import jp.araobp.camera.opecv.OpticalFlow
 import jp.araobp.camera.opecv.colorFilter
 import jp.araobp.camera.opecv.yuvToRgba
@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     private val mOpticalFlow = OpticalFlow()
     private lateinit var mObjectDetector: ObjectDetector
+    private val mDifference = DifferenceExtractor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -178,8 +179,17 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (toggleButtonOpticalFlow.isChecked) {
-                    filtered = mOpticalFlow.process(filtered)
+                    filtered = mOpticalFlow.update(filtered)
                 }
+
+                if (toggleButtonMotionDetection.isChecked) {
+                    filtered = mDifference.update(filtered, contour = false)
+                }
+
+                if (toggleButtonContourExtraction.isChecked) {
+                    filtered = mDifference.update(filtered, contour = true)
+                }
+
                 //--- Digital signal processing with OpenCV END ---//
 
                 var bitmapFiltered =

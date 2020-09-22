@@ -11,7 +11,7 @@ class OpticalFlow {
     private var mPrevMat: Mat? = null
     private lateinit var mCurrentMat: Mat
 
-    fun process(src: Mat): Mat {
+    fun update(src: Mat): Mat {
 
         val pt1 = Point()
         val pt2 = Point()

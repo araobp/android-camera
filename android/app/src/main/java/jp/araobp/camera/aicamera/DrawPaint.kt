@@ -37,7 +37,7 @@ fun paintBoundingBox(title: String): Paint {
         if (title in boundingBoxColors.keys) {
             color = boundingBoxColors.getValue(title)
         } else {
-            color = GRAY
+            color = ORANGE
         }
     }
     return paint

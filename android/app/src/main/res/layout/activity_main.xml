@@ -31,15 +31,26 @@
         app:layout_constraintTop_toBottomOf="@+id/toggleButtonColorFilter" />
 
     <ToggleButton
-        android:id="@+id/toggleButtonDifference"
+        android:id="@+id/toggleButtonMotionDetection"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:text="Button"
-        android:textOff="Difference"
-        android:textOn="Difference"
+        android:textOff="Motion Detection"
+        android:textOn="Motion Detection"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toggleButtonOpticalFlow" />
+
+    <ToggleButton
+        android:id="@+id/toggleButtonContourExtraction"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="Button"
+        android:textOff="Contour Extraction"
+        android:textOn="Contour Extraction"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toggleButtonMotionDetection" />
 
     <ToggleButton
         android:id="@+id/toggleButtonFaceRecognition"
@@ -50,7 +61,7 @@
         android:textOff="Face Recognition"
         android:textOn="Face Recognition"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toggleButtonDifference" />
+        app:layout_constraintTop_toBottomOf="@+id/toggleButtonContourExtraction" />
 
     <ToggleButton
         android:id="@+id/toggleButtonIntrusionDetection"
