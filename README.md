@@ -2,10 +2,20 @@
 
 Android CameraX image analysis demo with OpenCV4 and TesorFlow Lite
 
+
 ```
+Real camera mode
+
 [Image sensor]-->[CameraX]-->[OpenCV4]--+-----------------------+
                      |                  |                       |
                      +------------------+--->[TensorFlow Lite]--+---> Final output
+
+
+Virtual camera mode (for Unity)
+
+[Unity camera]-->[RenderTexture]-- MQTT --->[OpenCV4]--+-----------------------+
+                                    |                  |                       |
+                                    +------------------+--->[TensorFlow Lite]--+---> Final output
 ```
 
 ## Background and motivation
