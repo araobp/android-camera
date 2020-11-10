@@ -2,6 +2,7 @@
 
 Android CameraX image analysis demo with OpenCV4 and TesorFlow Lite
 
+(Work in progress) Develop virtual camara mode.
 
 ```
 Real camera mode
