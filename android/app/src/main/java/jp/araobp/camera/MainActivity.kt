@@ -2,42 +2,64 @@ package jp.araobp.camera
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import jp.araobp.camera.Properties.Companion.SCREEN_WIDTH_RATIO
 import jp.araobp.camera.aicamera.ObjectDetector
+import jp.araobp.camera.net.IMqttReceiver
+import jp.araobp.camera.net.MqttClient
 import jp.araobp.camera.opecv.DifferenceExtractor
 import jp.araobp.camera.opecv.OpticalFlow
 import jp.araobp.camera.opecv.colorFilter
 import jp.araobp.camera.opecv.yuvToRgba
 import jp.araobp.camera.util.saveImage
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.settings.*
+import kotlinx.android.synthetic.main.settings.view.*
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
+import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "camera"
+        private const val REQUEST_CODE_PERMISSIONS = 10
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        private const val SHIFT_HORIZONTAL = 100
+    }
 
     init {
         // OpenCV initialization
         OpenCVLoader.initDebug()
     }
+
+    private lateinit var mProps: Properties
 
     private lateinit var mCameraExecutor: ExecutorService
 
@@ -49,6 +71,23 @@ class MainActivity : AppCompatActivity() {
     private val mDifference = DifferenceExtractor()
 
     private var mShutterPressed = false
+
+    private lateinit var mMqttClient: MqttClient
+
+    val mqttReceiver = object : IMqttReceiver {
+        override fun messageArrived(topic: String?, message: MqttMessage?) {
+            message?.let {
+                if (mProps.remoteCamera) {
+                    Log.d(TAG, "mqtt message received on ${Properties.MQTT_TOPIC_IMAGE}")
+                    val jpegByteArray = it.payload
+                    val bitmap = BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
+                    if (topic == Properties.MQTT_TOPIC_IMAGE) {
+                        drawImage(bitmap)
+                    }
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -81,6 +120,92 @@ class MainActivity : AppCompatActivity() {
         mObjectDetector = ObjectDetector(this)
 
         mCameraExecutor = Executors.newSingleThreadExecutor()
+
+        mProps = Properties(this)
+
+        // Settings dialog
+        buttonSettings.setOnClickListener {
+
+            mProps.load()
+
+            val dialog = Dialog(this)
+            dialog.setContentView(R.layout.settings)
+
+            val editTextMqttServer = dialog.findViewById<EditText>(R.id.editTextMqttServer)
+            editTextMqttServer.setText(mProps.mqttServer)
+
+            val editTextMqttUsername = dialog.findViewById<EditText>(R.id.editTextMqttUsername)
+            editTextMqttUsername.setText(mProps.mqttUsername)
+
+            val editTextMqttPassword = dialog.findViewById<EditText>(R.id.editTextMqttPassword)
+            editTextMqttPassword.setText(mProps.mqttPassword)
+
+            val checkBoxRemoteCamera = dialog.findViewById<CheckBox>(R.id.checkBoxRemoteCamera)
+            checkBoxRemoteCamera.isChecked = mProps.remoteCamera
+
+            editTextMqttServer.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) =
+                    Unit
+
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) = Unit
+                override fun afterTextChanged(p0: Editable?) {
+                    mProps.mqttServer = editTextMqttServer.text.toString()
+                }
+            })
+
+            editTextMqttUsername.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) =
+                    Unit
+
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) = Unit
+                override fun afterTextChanged(p0: Editable?) {
+                    mProps.mqttUsername = editTextMqttUsername.text.toString()
+                }
+            })
+
+            editTextMqttPassword.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) =
+                    Unit
+
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) = Unit
+                override fun afterTextChanged(p0: Editable?) {
+                    mProps.mqttPassword = editTextMqttPassword.text.toString()
+                }
+            })
+
+            checkBoxRemoteCamera.setOnCheckedChangeListener { _, isChecked ->
+                mProps.remoteCamera = isChecked
+            }
+
+            dialog.setOnDismissListener {
+                mProps.save()
+            }
+
+            dialog.show()
+        }
+
+        buttonQuit.setOnClickListener {
+            this@MainActivity.finish()
+            exitProcess(0)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mMqttClient = MqttClient(
+            context = this,
+            mqttServer = mProps.mqttServer,
+            mqttUsername = mProps.mqttUsername,
+            mqttPassword = mProps.mqttPassword,
+            clientId = TAG,
+            receiver = mqttReceiver
+        )
+        mMqttClient.connect(listOf(Properties.MQTT_TOPIC_IMAGE))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mMqttClient.destroy()
     }
 
     private fun startCamera() {
@@ -107,9 +232,8 @@ class MainActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 // Bind use cases to camera
-
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, imageAnalyzer
+                    this as LifecycleOwner, cameraSelector, imageAnalyzer
                 )
 
             } catch (exc: Exception) {
@@ -131,12 +255,6 @@ class MainActivity : AppCompatActivity() {
         mCameraExecutor.shutdown()
     }
 
-    companion object {
-        private const val TAG = "camera"
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults:
         IntArray
@@ -155,68 +273,81 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun drawImage(bitmap: Bitmap) {
+        val src = Rect(0, 0, bitmap.width - 1, bitmap.height - 1)
+        val dest = Rect(SHIFT_HORIZONTAL, 0, mRectRight+ SHIFT_HORIZONTAL, mRectBottom)
+
+        val canvas = surfaceView.holder.lockCanvas()
+        canvas.drawColor(0, PorterDuff.Mode.CLEAR)
+        canvas.drawBitmap(bitmap, src, dest, null)
+        surfaceView.holder.unlockCanvasAndPost(canvas)
+
+        if (mShutterPressed) {
+            saveImage(bitmap, this@MainActivity, "android-camera")
+            mShutterPressed = false
+        }
+    }
+
     private inner class ImageAnalyzer() : ImageAnalysis.Analyzer {
 
         @SuppressLint("UnsafeExperimentalUsageError")
         override fun analyze(imageProxy: ImageProxy) {
 
-            Log.d(TAG, "width: ${imageProxy.width}, height: ${imageProxy.height}")
-            val mat = imageProxy.image?.yuvToRgba()
-            imageProxy.close()
+            if (!mProps.remoteCamera) {
+                Log.d(TAG, "width: ${imageProxy.width}, height: ${imageProxy.height}")
+                val mat = imageProxy.image?.yuvToRgba()
+                imageProxy.close()
 
-            mat?.let {
+                mat?.let {
 
-                var filtered = it
+                    var filtered = it.clone()
 
-                //--- Digital signal processing with OpenCV START---//
-                if (toggleButtonColorFilter.isChecked) {
-                    filtered = colorFilter(filtered, "yellow", "red")
+                    //--- Digital signal processing with OpenCV START---//
+                    if (toggleButtonColorFilter.isChecked) {
+                        filtered = colorFilter(filtered, "yellow", "red")
+                    }
+
+                    if (toggleButtonOpticalFlow.isChecked) {
+                        filtered = mOpticalFlow.update(filtered)
+                    }
+
+                    if (toggleButtonMotionDetection.isChecked) {
+                        filtered = mDifference.update(filtered, contour = false)
+                    }
+
+                    if (toggleButtonContourExtraction.isChecked) {
+                        filtered = mDifference.update(filtered, contour = true)
+                    }
+
+                    //--- Digital signal processing with OpenCV END ---//
+
+                    var bitmapFiltered =
+                        Bitmap.createBitmap(
+                            imageProxy.width,
+                            imageProxy.height,
+                            Bitmap.Config.ARGB_8888
+                        )
+
+                    Utils.matToBitmap(filtered, bitmapFiltered);
+
+                    // Object detection with TensorFlow Lite
+                    if (toggleButtonObjectDetection.isChecked) {
+                        val bitmapOriginal = Bitmap.createBitmap(
+                            imageProxy.width, imageProxy.height,
+                            Bitmap.Config.ARGB_8888
+                        )
+                        Utils.matToBitmap(it, bitmapOriginal)
+                        bitmapFiltered = mObjectDetector.detect(bitmapFiltered, bitmapOriginal)
+                    }
+
+                    drawImage(bitmapFiltered)
+
                 }
+            } else {
 
-                if (toggleButtonOpticalFlow.isChecked) {
-                    filtered = mOpticalFlow.update(filtered)
-                }
-
-                if (toggleButtonMotionDetection.isChecked) {
-                    filtered = mDifference.update(filtered, contour = false)
-                }
-
-                if (toggleButtonContourExtraction.isChecked) {
-                    filtered = mDifference.update(filtered, contour = true)
-                }
-
-                //--- Digital signal processing with OpenCV END ---//
-
-                var bitmapFiltered =
-                    Bitmap.createBitmap(
-                        imageProxy.width,
-                        imageProxy.height,
-                        Bitmap.Config.ARGB_8888
-                    )
-
-                Utils.matToBitmap(filtered, bitmapFiltered);
-
-                // Object detection with TensorFlow Lite
-                if (toggleButtonObjectDetection.isChecked) {
-                    bitmapFiltered = mObjectDetector.detect(bitmapFiltered)
-                }
-
-                val src = Rect(0, 0, imageProxy.width - 1, imageProxy.height - 1)
-                val dest = Rect(0, 0, mRectRight, mRectBottom)
-
-                val canvas = surfaceView.holder.lockCanvas()
-                canvas.drawColor(0, PorterDuff.Mode.CLEAR)
-                canvas.drawBitmap(bitmapFiltered, src, dest, null)
-                surfaceView.holder.unlockCanvasAndPost(canvas)
-
-                if (mShutterPressed) {
-                    saveImage(bitmapFiltered, this@MainActivity, "android-camera")
-                    mShutterPressed = false
-                }
             }
         }
     }
-
 
     private fun makeFullscreen() {
         window.decorView.systemUiVisibility =

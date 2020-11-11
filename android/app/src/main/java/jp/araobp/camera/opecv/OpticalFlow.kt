@@ -1,7 +1,6 @@
 package jp.araobp.camera.opecv
 
 import org.opencv.core.*
-import org.opencv.imgproc.Imgproc
 import org.opencv.imgproc.Imgproc.*
 import org.opencv.video.Video
 
@@ -18,12 +17,12 @@ class OpticalFlow {
 
         if (mPrevMat == null) {
             mCurrentMat = src.clone()
-            Imgproc.cvtColor(mCurrentMat, mCurrentMat, Imgproc.COLOR_RGBA2GRAY)
+            cvtColor(mCurrentMat, mCurrentMat, COLOR_RGBA2GRAY)
             mPrevMat = mCurrentMat.clone()
         } else {
             mPrevMat = mCurrentMat
             mCurrentMat = src.clone()
-            Imgproc.cvtColor(mCurrentMat, mCurrentMat, Imgproc.COLOR_RGBA2GRAY)
+            cvtColor(mCurrentMat, mCurrentMat, COLOR_RGBA2GRAY)
         }
 
         val flow = Mat(mCurrentMat.size(), CvType.CV_32FC2)

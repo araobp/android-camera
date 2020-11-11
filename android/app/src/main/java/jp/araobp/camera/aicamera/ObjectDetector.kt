@@ -30,10 +30,10 @@ class ObjectDetector(context: Context) {
         context, numThreads = 2
     )
 
-    fun detect(bitmap: Bitmap): Bitmap? {
+    fun detect(bitmapFiltered: Bitmap, bitmapOriginal: Bitmap): Bitmap? {
         // Scale down to 300x300 tensor as input for SSD MobileNetv2
         val inputBitmap = Bitmap.createScaledBitmap(
-            bitmap,
+            bitmapOriginal,
             SsdMobileNetV2.INPUT_SIZE,
             SsdMobileNetV2.INPUT_SIZE,
             false
@@ -43,12 +43,15 @@ class ObjectDetector(context: Context) {
         val result = ssdMobileNetV2.recognizeImage(inputBitmap)
         //Log.d(TAG, "Result: $result")
 
+        bitmapOriginal.recycle()
+
         var newBitmap: Bitmap? = null
 
         try {
             result?.let {
-                newBitmap = bitmap.copy(Bitmap.Config.ARGB_8888 ,true);
-                bitmap.recycle()
+                // Immutable bitmap to mutable bitmap
+                newBitmap = bitmapFiltered.copy(Bitmap.Config.ARGB_8888 ,true)
+                bitmapFiltered.recycle()
                 val canvas = Canvas(newBitmap!!)
                 results.clear()
                 for (i in 0 until if (result.size < MAX_NUM_RECOGNITIONS) result.size else MAX_NUM_RECOGNITIONS) {

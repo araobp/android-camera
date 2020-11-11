@@ -44,15 +44,24 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
-    def camerax_version = "1.0.0-beta07"
-    // CameraX core library using camera2 implementation
-    implementation "androidx.camera:camera-camera2:$camerax_version"
-    // CameraX Lifecycle Library
-    implementation "androidx.camera:camera-lifecycle:$camerax_version"
-    // CameraX View class
-    implementation "androidx.camera:camera-view:1.0.0-alpha14"
+    // CameraX core library using the camera2 implementation
+    def camerax_version = "1.0.0-beta11"
+    // The following line is optional, as the core library is included indirectly by camera-camera2
+    implementation "androidx.camera:camera-core:${camerax_version}"
+    implementation "androidx.camera:camera-camera2:${camerax_version}"
+    // If you want to additionally use the CameraX Lifecycle library
+    implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+    // If you want to additionally use the CameraX View class
+    implementation "androidx.camera:camera-view:1.0.0-alpha18"
+    // If you want to additionally use the CameraX Extensions library
+    implementation "androidx.camera:camera-extensions:1.0.0-alpha18"
 
     // TensorFlow Lite
     implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
+
+    // MQTT
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.0'
+    implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
 }

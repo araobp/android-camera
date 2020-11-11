@@ -1,11 +1,38 @@
 package jp.araobp.camera
 
-import android.util.Size
-import androidx.camera.core.AspectRatio
+import android.content.Context
 
-class Properties {
+class Properties(val context: Context) {
+
     companion object {
-        val TARGET_RESOLUTION = Size(1280, 720)
+        const val PREFS_NAME = "camera"
         val SCREEN_WIDTH_RATIO = 12F / 19F  // 19:9 to 4:3
+        val MQTT_TOPIC_IMAGE = "image"
+    }
+
+    var mqttServer = "localhost"
+    var mqttUsername = "simulator"
+    var mqttPassword = "simulator"
+    var remoteCamera = false
+
+    init {
+        load()
+    }
+
+    fun load() {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        mqttServer = prefs.getString("mqttServer", "localhost").toString()
+        mqttUsername = prefs.getString("mqttUsername", "anonymous").toString()
+        mqttPassword = prefs.getString("mqttPassword", "password").toString()
+        remoteCamera = prefs.getBoolean("remoteCamera", false)
+    }
+
+    fun save() {
+        val editor = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        editor.putString("mqttServer", mqttServer)
+        editor.putString("mqttUsername", mqttUsername)
+        editor.putString("mqttPassword", mqttPassword)
+        editor.putBoolean("remoteCamera", remoteCamera)
+        editor.apply()
     }
 }
