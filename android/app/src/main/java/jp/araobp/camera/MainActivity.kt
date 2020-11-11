@@ -25,7 +25,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import jp.araobp.camera.Properties.Companion.SCREEN_WIDTH_RATIO
+import jp.araobp.camera.Properties.Companion.IMAGE_ASPECT_RATIO
 import jp.araobp.camera.aicamera.ObjectDetector
 import jp.araobp.camera.net.IMqttReceiver
 import jp.araobp.camera.net.MqttClient
@@ -35,8 +35,6 @@ import jp.araobp.camera.opecv.colorFilter
 import jp.araobp.camera.opecv.yuvToRgba
 import jp.araobp.camera.util.saveImage
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.settings.*
-import kotlinx.android.synthetic.main.settings.view.*
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
@@ -51,7 +49,6 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "camera"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-        private const val SHIFT_HORIZONTAL = 100
     }
 
     init {
@@ -113,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         makeFullscreen()
 
         surfaceView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            mRectRight = (surfaceView.width * SCREEN_WIDTH_RATIO).roundToInt() - 1
+            mRectRight = (surfaceView.height * IMAGE_ASPECT_RATIO).roundToInt() - 1
             mRectBottom = surfaceView.height - 1
         }
 
@@ -275,7 +272,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun drawImage(bitmap: Bitmap) {
         val src = Rect(0, 0, bitmap.width - 1, bitmap.height - 1)
-        val dest = Rect(SHIFT_HORIZONTAL, 0, mRectRight+ SHIFT_HORIZONTAL, mRectBottom)
+        val dest = Rect(Properties.SHIFT_IMAGE, 0, mRectRight + Properties.SHIFT_IMAGE, mRectBottom)
 
         val canvas = surfaceView.holder.lockCanvas()
         canvas.drawColor(0, PorterDuff.Mode.CLEAR)

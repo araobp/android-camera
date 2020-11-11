@@ -6,8 +6,11 @@ class Properties(val context: Context) {
 
     companion object {
         const val PREFS_NAME = "camera"
-        val SCREEN_WIDTH_RATIO = 12F / 19F  // 19:9 to 4:3
-        val MQTT_TOPIC_IMAGE = "image"
+
+        const val IMAGE_ASPECT_RATIO = 4F/3F
+        const val SHIFT_IMAGE = 100
+
+        const val MQTT_TOPIC_IMAGE = "image"
     }
 
     var mqttServer = "localhost"
