@@ -42,6 +42,11 @@ Android-based monitoring cameras are cheaper and more flexible than the traditio
 
 This project is just a skeleton of such an AI camera.
 
+## Requirements
+
+OpenCV4 Android SDK has to be installed properly in this project -- it is not included in this repo.
+
+The other components are installed by Gradle automatically.
 
 ## Image processing filters with OpenCV4
 
