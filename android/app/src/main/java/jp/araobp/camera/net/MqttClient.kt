@@ -129,7 +129,7 @@ class MqttClient(
                     Log.d(TAG, "onSuccess")
                     try {
                         topicList.forEach {
-                            mMqttClient.subscribe("${it}Tx", 0)
+                            mMqttClient.subscribe(it, 0)
                             mTopicList.add(it)
                         }
                     } catch (e: MqttException) {
