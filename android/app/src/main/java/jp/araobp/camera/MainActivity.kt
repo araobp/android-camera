@@ -10,6 +10,8 @@ import android.graphics.BitmapFactory
 import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -74,18 +76,24 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mMqttClient: MqttClient
 
+    private var handlerThread: HandlerThread = HandlerThread("analyzer").apply { start() }
+    private var handler = Handler(handlerThread.looper)
+
     val mqttReceiver = object : IMqttReceiver {
         override fun messageArrived(topic: String?, message: MqttMessage?) {
             message?.let {
                 if (mProps.remoteCamera) {
-                    Log.d(TAG, "mqtt message received on ${Properties.MQTT_TOPIC_IMAGE}")
-                    val jpegByteArray = it.payload
-                    val bitmap = BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
                     if (topic == Properties.MQTT_TOPIC_IMAGE) {
-                        val mat = Mat()
-                        Utils.bitmapToMat(bitmap, mat)
-                        val bitmap = processImage(mat)
-                        drawImage(bitmap)
+                        Log.d(TAG, "mqtt message received on ${Properties.MQTT_TOPIC_IMAGE}")
+                        handler.post {
+                            val jpegByteArray = it.payload
+                            val bitmap =
+                                BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
+                            val mat = Mat()
+                            Utils.bitmapToMat(bitmap, mat)
+                            val filterdBitmap = processImage(mat)
+                            drawImage(filterdBitmap)
+                        }
                     }
                 }
             }
