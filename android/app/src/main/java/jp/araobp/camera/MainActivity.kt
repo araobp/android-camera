@@ -21,6 +21,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
+import androidx.camera.core.internal.utils.ImageUtil
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -38,6 +39,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
+import org.opencv.core.Mat
+import org.opencv.imgproc.Imgproc
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
@@ -79,6 +82,9 @@ class MainActivity : AppCompatActivity() {
                     val jpegByteArray = it.payload
                     val bitmap = BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
                     if (topic == Properties.MQTT_TOPIC_IMAGE) {
+                        val mat = Mat()
+                        Utils.bitmapToMat(bitmap, mat)
+                        val bitmap = processImage(mat)
                         drawImage(bitmap)
                     }
                 }
@@ -205,6 +211,11 @@ class MainActivity : AppCompatActivity() {
         mMqttClient.destroy()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        mCameraExecutor.shutdown()
+    }
+
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -247,11 +258,6 @@ class MainActivity : AppCompatActivity() {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        mCameraExecutor.shutdown()
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults:
         IntArray
@@ -285,8 +291,59 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private inner class ImageAnalyzer() : ImageAnalysis.Analyzer {
+    // Image processing pipeline with OpenCV and TensorFlow Lite
+    private fun processImage(mat: Mat): Bitmap {
 
+        var filtered = mat.clone()
+
+        //--- Digital signal processing with OpenCV START---//
+
+        if (toggleButtonColorFilter.isChecked) {
+            filtered = colorFilter(filtered, "yellow", "red")
+        }
+
+        if (toggleButtonOpticalFlow.isChecked) {
+            filtered = mOpticalFlow.update(filtered)
+        }
+
+        if (toggleButtonMotionDetection.isChecked) {
+            filtered = mDifference.update(filtered, contour = false)
+        }
+
+        if (toggleButtonContourExtraction.isChecked) {
+            filtered = mDifference.update(filtered, contour = true)
+        }
+
+        //--- Digital signal processing with OpenCV END ---//
+
+        val width = filtered.cols()
+        val height = filtered.rows()
+
+        var bitmapFiltered =
+            Bitmap.createBitmap(
+                width, height,
+                Bitmap.Config.ARGB_8888
+            )
+
+        Utils.matToBitmap(filtered, bitmapFiltered);
+
+        // Object detection with TensorFlow Lite START
+
+        if (toggleButtonObjectDetection.isChecked) {
+            val bitmapOriginal = Bitmap.createBitmap(
+                width, height,
+                Bitmap.Config.ARGB_8888
+            )
+            Utils.matToBitmap(mat, bitmapOriginal)
+            bitmapFiltered = mObjectDetector.detect(bitmapFiltered, bitmapOriginal)
+        }
+
+        // Object detection with TensorFlow Lite END
+
+        return bitmapFiltered
+    }
+
+    private inner class ImageAnalyzer() : ImageAnalysis.Analyzer {
         @SuppressLint("UnsafeExperimentalUsageError")
         override fun analyze(imageProxy: ImageProxy) {
 
@@ -294,54 +351,10 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "width: ${imageProxy.width}, height: ${imageProxy.height}")
                 val mat = imageProxy.image?.yuvToRgba()
                 imageProxy.close()
-
                 mat?.let {
-
-                    var filtered = it.clone()
-
-                    //--- Digital signal processing with OpenCV START---//
-                    if (toggleButtonColorFilter.isChecked) {
-                        filtered = colorFilter(filtered, "yellow", "red")
-                    }
-
-                    if (toggleButtonOpticalFlow.isChecked) {
-                        filtered = mOpticalFlow.update(filtered)
-                    }
-
-                    if (toggleButtonMotionDetection.isChecked) {
-                        filtered = mDifference.update(filtered, contour = false)
-                    }
-
-                    if (toggleButtonContourExtraction.isChecked) {
-                        filtered = mDifference.update(filtered, contour = true)
-                    }
-
-                    //--- Digital signal processing with OpenCV END ---//
-
-                    var bitmapFiltered =
-                        Bitmap.createBitmap(
-                            imageProxy.width,
-                            imageProxy.height,
-                            Bitmap.Config.ARGB_8888
-                        )
-
-                    Utils.matToBitmap(filtered, bitmapFiltered);
-
-                    // Object detection with TensorFlow Lite
-                    if (toggleButtonObjectDetection.isChecked) {
-                        val bitmapOriginal = Bitmap.createBitmap(
-                            imageProxy.width, imageProxy.height,
-                            Bitmap.Config.ARGB_8888
-                        )
-                        Utils.matToBitmap(it, bitmapOriginal)
-                        bitmapFiltered = mObjectDetector.detect(bitmapFiltered, bitmapOriginal)
-                    }
-
-                    drawImage(bitmapFiltered)
-
+                    val bitmap = processImage(it)
+                    drawImage(bitmap)
                 }
-            } else {
-
             }
         }
     }

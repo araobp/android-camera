@@ -4,16 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#18614F"
+    android:background="#384378"
     tools:context=".MainActivity">
-
 
     <ToggleButton
         android:id="@+id/toggleButtonColorFilter"
-        android:layout_width="180dp"
+        android:layout_width="@dimen/buttonWidth"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginTop="@dimen/marginTop"
+        android:layout_marginEnd="@dimen/marginEnd"
         android:text="Button"
         android:textOff="Color Filter"
         android:textOn="Color Filter"
@@ -22,9 +21,9 @@
 
     <ToggleButton
         android:id="@+id/toggleButtonOpticalFlow"
-        android:layout_width="180dp"
+        android:layout_width="@dimen/buttonWidth"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/marginEnd"
         android:text="Button"
         android:textOff="Optical Flow"
         android:textOn="Optical Flow"
@@ -33,9 +32,9 @@
 
     <ToggleButton
         android:id="@+id/toggleButtonMotionDetection"
-        android:layout_width="180dp"
+        android:layout_width="@dimen/buttonWidth"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/marginEnd"
         android:text="Button"
         android:textOff="Motion Detection"
         android:textOn="Motion Detection"
@@ -44,9 +43,9 @@
 
     <ToggleButton
         android:id="@+id/toggleButtonContourExtraction"
-        android:layout_width="180dp"
+        android:layout_width="@dimen/buttonWidth"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/marginEnd"
         android:text="Button"
         android:textOff="Contour Extraction"
         android:textOn="Contour Extraction"
@@ -55,9 +54,9 @@
 
     <ToggleButton
         android:id="@+id/toggleButtonObjectDetection"
-        android:layout_width="180dp"
+        android:layout_width="@dimen/buttonWidth"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/marginEnd"
         android:text="Button"
         android:textOff="Object Detection"
         android:textOn="Object Detection"
@@ -66,18 +65,18 @@
 
     <Button
         android:id="@+id/buttonSettings"
-        android:layout_width="180dp"
+        android:layout_width="@dimen/buttonWidth"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/marginEnd"
         android:text="Settings"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toggleButtonObjectDetection" />
 
     <Button
         android:id="@+id/buttonQuit"
-        android:layout_width="180dp"
+        android:layout_width="@dimen/buttonWidth"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/marginEnd"
         android:text="Quit"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/buttonSettings" />
@@ -86,7 +85,7 @@
         android:id="@+id/surfaceView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/marginEnd"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/toggleButtonColorFilter"
         app:layout_constraintHorizontal_bias="0.0"

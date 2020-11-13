@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="editTextWidth">280sp</dimen>
+    <dimen name="buttonWidth">180dp</dimen>
+    <dimen name="marginTop">16dp</dimen>
+    <dimen name="marginEnd">12dp</dimen>
 </resources>
