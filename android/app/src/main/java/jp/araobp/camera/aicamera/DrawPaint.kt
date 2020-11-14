@@ -47,7 +47,7 @@ fun paintTitleBox(paintColor: Int): Paint {
     paint.apply {
         style = Paint.Style.FILL
         color = paintColor
-        textSize = 20F
+        textSize = 16F
     }
     return paint
 }

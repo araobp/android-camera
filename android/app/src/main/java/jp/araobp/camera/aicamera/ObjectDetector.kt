@@ -30,7 +30,10 @@ class ObjectDetector(context: Context) {
         context, numThreads = 2
     )
 
-    fun detect(bitmapFiltered: Bitmap, bitmapOriginal: Bitmap): Bitmap? {
+    fun detect(bitmapFiltered: Bitmap,
+               bitmapOriginal: Bitmap,
+               confidenceThres: Int = CONFIDENCE_THRES,
+               personOnly: Boolean = false): Bitmap? {
         // Scale down to 300x300 tensor as input for SSD MobileNetv2
         val inputBitmap = Bitmap.createScaledBitmap(
             bitmapOriginal,
@@ -61,42 +64,44 @@ class ObjectDetector(context: Context) {
                     val confidence = r.confidence
                     val title = r.title
 
-                    if (confidence!! > CONFIDENCE_THRES / 100F) {
+                    if (!(personOnly && title != "person")) {
+                        if (confidence!! > confidenceThres / 100F) {
 
-                        // Rectangle location on 300x300 input tensor
-                        val w = location.right - location.left
-                        val h = location.bottom - location.top
-                        val s = abs(w * h)
+                            // Rectangle location on 300x300 input tensor
+                            val w = location.right - location.left
+                            val h = location.bottom - location.top
+                            val s = abs(w * h)
 
-                        // Check if the recognized object fits in frame of each input bitmap
-                        if (location.left > OBJECT_OFFSET_LEFT && location.right < OBJECT_OFFSET_RIGHT
-                            && location.top > OBJECT_OFFSET_TOP && location.bottom < OBJECT_OFFSET_BOTTOM &&
-                            s < MAX_OBJECT_AREA && s > MIN_OBJECT_AREA
-                        ) {
+                            // Check if the recognized object fits in frame of each input bitmap
+                            if (location.left > OBJECT_OFFSET_LEFT && location.right < OBJECT_OFFSET_RIGHT
+                                && location.top > OBJECT_OFFSET_TOP && location.bottom < OBJECT_OFFSET_BOTTOM &&
+                                s < MAX_OBJECT_AREA && s > MIN_OBJECT_AREA
+                            ) {
 
-                            val xRatio = canvas.width.toFloat() / SsdMobileNetV2.INPUT_SIZE
-                            val yRatio = canvas.height.toFloat() / SsdMobileNetV2.INPUT_SIZE
-                            val rectF = RectF(
-                                location.left * xRatio,
-                                location.top * yRatio,
-                                location.right * xRatio,
-                                location.bottom * yRatio
-                            )
+                                val xRatio = canvas.width.toFloat() / SsdMobileNetV2.INPUT_SIZE
+                                val yRatio = canvas.height.toFloat() / SsdMobileNetV2.INPUT_SIZE
+                                val rectF = RectF(
+                                    location.left * xRatio,
+                                    location.top * yRatio,
+                                    location.right * xRatio,
+                                    location.bottom * yRatio
+                                )
 
-                            // Draw text
-                            val paint = paintBoundingBox(title!!)
-                            canvas.drawRoundRect(rectF, 8F, 8F, paint)
+                                // Draw text
+                                val paint = paintBoundingBox(title!!)
+                                canvas.drawRoundRect(rectF, 8F, 8F, paint)
 
-                            val confidenceInPercent = (confidence * 100F).roundToTheNth(1)
-                            val text = "$title ${confidenceInPercent}%"
-                            canvas.drawText(
-                                text,
-                                rectF.left,
-                                rectF.top - 10F,
-                                paintTitleBox(paint.color)
-                            )
+                                val confidenceInPercent = (confidence * 100F).roundToTheNth(1)
+                                val text = "$title ${confidenceInPercent}%"
+                                canvas.drawText(
+                                    text,
+                                    rectF.left,
+                                    rectF.top - 10F,
+                                    paintTitleBox(paint.color)
+                                )
 
-                            results.add(r)
+                                results.add(r)
+                            }
                         }
                     }
                 }

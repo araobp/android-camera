@@ -45,6 +45,8 @@ import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
@@ -75,24 +77,29 @@ class MainActivity : AppCompatActivity() {
     private var mShutterPressed = false
 
     private lateinit var mMqttClient: MqttClient
-
-    private var handlerThread: HandlerThread = HandlerThread("analyzer").apply { start() }
-    private var handler = Handler(handlerThread.looper)
+    private lateinit var mLock: AtomicBoolean
 
     val mqttReceiver = object : IMqttReceiver {
         override fun messageArrived(topic: String?, message: MqttMessage?) {
             message?.let {
                 if (mProps.remoteCamera) {
                     if (topic == Properties.MQTT_TOPIC_IMAGE) {
-                        Log.d(TAG, "mqtt message received on ${Properties.MQTT_TOPIC_IMAGE}")
-                        handler.post {
-                            val jpegByteArray = it.payload
-                            val bitmap =
-                                BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
-                            val mat = Mat()
-                            Utils.bitmapToMat(bitmap, mat)
-                            val filterdBitmap = processImage(mat)
-                            drawImage(filterdBitmap)
+                        if (mLock.compareAndSet(false, true)) {
+                            Log.d(TAG, "mqtt message received on ${Properties.MQTT_TOPIC_IMAGE}")
+                            thread {
+                                val jpegByteArray = it.payload
+                                val bitmap =
+                                    BitmapFactory.decodeByteArray(
+                                        jpegByteArray,
+                                        0,
+                                        jpegByteArray.size
+                                    )
+                                val mat = Mat()
+                                Utils.bitmapToMat(bitmap, mat)
+                                val filterdBitmap = processImage(mat)
+                                drawImage(filterdBitmap)
+                                mLock.set(false)
+                            }
                         }
                     }
                 }
@@ -199,6 +206,8 @@ class MainActivity : AppCompatActivity() {
             this@MainActivity.finish()
             exitProcess(0)
         }
+
+        mLock = AtomicBoolean(false)
     }
 
     override fun onResume() {
@@ -343,7 +352,7 @@ class MainActivity : AppCompatActivity() {
                 Bitmap.Config.ARGB_8888
             )
             Utils.matToBitmap(mat, bitmapOriginal)
-            bitmapFiltered = mObjectDetector.detect(bitmapFiltered, bitmapOriginal)
+            bitmapFiltered = mObjectDetector.detect(bitmapFiltered, bitmapOriginal, 40)
         }
 
         // Object detection with TensorFlow Lite END

@@ -28,7 +28,7 @@ class OpticalFlow {
         val flow = Mat(mCurrentMat.size(), CvType.CV_32FC2)
         Video.calcOpticalFlowFarneback(
             mPrevMat, mCurrentMat,
-            flow, 0.5, 3, 15, 3, 5, 1.1, 0
+            flow, 0.5, 3, 15, 3, 5, 1.5, 0
         )
 
         val dst = src.clone()
@@ -46,7 +46,7 @@ class OpticalFlow {
                     dst,
                     pt1,
                     pt2,
-                    color, 2, LINE_8, 0, 0.4
+                    color, 2, LINE_8, 0, 0.6
                 )
                 j += 20
             }
