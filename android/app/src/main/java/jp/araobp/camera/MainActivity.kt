@@ -10,8 +10,6 @@ import android.graphics.BitmapFactory
 import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -23,7 +21,6 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
-import androidx.camera.core.internal.utils.ImageUtil
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -32,17 +29,14 @@ import jp.araobp.camera.Properties.Companion.IMAGE_ASPECT_RATIO
 import jp.araobp.camera.aicamera.ObjectDetector
 import jp.araobp.camera.net.IMqttReceiver
 import jp.araobp.camera.net.MqttClient
-import jp.araobp.camera.opecv.DifferenceExtractor
-import jp.araobp.camera.opecv.OpticalFlow
-import jp.araobp.camera.opecv.colorFilter
-import jp.araobp.camera.opecv.yuvToRgba
+import jp.araobp.camera.opecv.*
+import jp.araobp.camera.util.Fps
 import jp.araobp.camera.util.saveImage
 import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
 import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -70,7 +64,8 @@ class MainActivity : AppCompatActivity() {
     private var mRectRight = 0
     private var mRectBottom = 0
 
-    private val mOpticalFlow = OpticalFlow()
+    private val mOpticalFlowFarneback = OpticalFlowFarneback()
+
     private lateinit var mObjectDetector: ObjectDetector
     private val mDifference = DifferenceExtractor()
 
@@ -78,6 +73,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mMqttClient: MqttClient
     private lateinit var mLock: AtomicBoolean
+
+    private val mFps = Fps()
 
     val mqttReceiver = object : IMqttReceiver {
         override fun messageArrived(topic: String?, message: MqttMessage?) {
@@ -161,6 +158,9 @@ class MainActivity : AppCompatActivity() {
             val checkBoxRemoteCamera = dialog.findViewById<CheckBox>(R.id.checkBoxRemoteCamera)
             checkBoxRemoteCamera.isChecked = mProps.remoteCamera
 
+            val checkBoxFps = dialog.findViewById<CheckBox>(R.id.checkBoxFps)
+            checkBoxFps.isChecked = mProps.showFps
+
             editTextMqttServer.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) =
                     Unit
@@ -193,6 +193,10 @@ class MainActivity : AppCompatActivity() {
 
             checkBoxRemoteCamera.setOnCheckedChangeListener { _, isChecked ->
                 mProps.remoteCamera = isChecked
+            }
+
+            checkBoxFps.setOnCheckedChangeListener { _, isChecked ->
+                mProps.showFps = isChecked
             }
 
             dialog.setOnDismissListener {
@@ -302,6 +306,12 @@ class MainActivity : AppCompatActivity() {
         canvas.drawBitmap(bitmap, src, dest, null)
         surfaceView.holder.unlockCanvasAndPost(canvas)
 
+        if (mProps.showFps) {
+            textViewFps.post {
+                textViewFps.text = "${mFps.update()} FPS"
+            }
+        }
+
         if (mShutterPressed) {
             saveImage(bitmap, this@MainActivity, "android-camera")
             mShutterPressed = false
@@ -320,7 +330,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (toggleButtonOpticalFlow.isChecked) {
-            filtered = mOpticalFlow.update(filtered)
+            filtered = mOpticalFlowFarneback.update(filtered)
         }
 
         if (toggleButtonMotionDetection.isChecked) {

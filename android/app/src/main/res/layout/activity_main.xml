@@ -81,6 +81,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/buttonSettings" />
 
+    <TextView
+        android:id="@+id/textViewFps"
+        android:layout_width="100sp"
+        android:layout_height="20sp"
+        android:layout_marginTop="8dp"
+        android:text="TextView"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="@+id/buttonQuit"
+        app:layout_constraintTop_toBottomOf="@+id/buttonQuit" />
+
     <SurfaceView
         android:id="@+id/surfaceView"
         android:layout_width="0dp"
@@ -92,6 +102,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -17,3 +17,9 @@ fun Float.roundToTheNth(n: Int): Float {
     val magnify = 10F.pow(n)
     return (this * magnify).roundToInt() / magnify
 }
+
+// Round a doube value to the first decimal place
+fun Double.roundToTheNth(n: Int): Double {
+    val magnify = 10.0.pow(n)
+    return (this * magnify).roundToInt() / magnify
+}

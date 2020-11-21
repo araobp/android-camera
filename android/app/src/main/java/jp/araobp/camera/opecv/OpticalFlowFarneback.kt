@@ -5,7 +5,7 @@ import org.opencv.imgproc.Imgproc.*
 import org.opencv.video.Video
 
 // [Reference] http://me10.sblo.jp/article/88289624.html
-class OpticalFlow {
+class OpticalFlowFarneback {
 
     private var mPrevMat: Mat? = null
     private lateinit var mCurrentMat: Mat

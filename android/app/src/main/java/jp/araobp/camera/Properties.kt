@@ -17,6 +17,7 @@ class Properties(val context: Context) {
     var mqttUsername = "simulator"
     var mqttPassword = "simulator"
     var remoteCamera = false
+    var showFps = false
 
     init {
         load()
@@ -28,6 +29,7 @@ class Properties(val context: Context) {
         mqttUsername = prefs.getString("mqttUsername", "anonymous").toString()
         mqttPassword = prefs.getString("mqttPassword", "password").toString()
         remoteCamera = prefs.getBoolean("remoteCamera", false)
+        showFps = prefs.getBoolean("fps", false)
     }
 
     fun save() {
@@ -36,6 +38,7 @@ class Properties(val context: Context) {
         editor.putString("mqttUsername", mqttUsername)
         editor.putString("mqttPassword", mqttPassword)
         editor.putBoolean("remoteCamera", remoteCamera)
+        editor.putBoolean("fps", showFps)
         editor.apply()
     }
 }
